@@ -1,0 +1,1662 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Warehouse Transport System - Cloud</title>
+
+    <!-- SheetJS for Excel export -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+
+    <!-- jsPDF for PDF export -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.31/jspdf.plugin.autotable.min.js"></script>
+
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700&display=swap');
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Cairo', sans-serif;
+            background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+            min-height: 100vh;
+            color: #333;
+        }
+
+        /* Login Screen */
+        .login-container {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 9999;
+        }
+
+        .login-box {
+            background: white;
+            padding: 40px;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            width: 90%;
+            max-width: 400px;
+            text-align: center;
+        }
+
+        .login-logo {
+            width: 120px;
+            height: 120px;
+            object-fit: contain;
+            margin-bottom: 20px;
+            border-radius: 50%;
+            border: 3px solid #2a5298;
+        }
+
+        .login-box h2 {
+            color: #2a5298;
+            margin-bottom: 30px;
+            font-size: 1.8rem;
+        }
+
+        .login-form input {
+            width: 100%;
+            padding: 15px;
+            margin-bottom: 15px;
+            border: 2px solid #e0e0e0;
+            border-radius: 10px;
+            font-size: 1rem;
+            font-family: 'Cairo', sans-serif;
+            text-align: right;
+        }
+
+        .login-form input:focus {
+            outline: none;
+            border-color: #2a5298;
+        }
+
+        .login-btn {
+            width: 100%;
+            padding: 15px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-size: 1.1rem;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-family: 'Cairo', sans-serif;
+        }
+
+        .login-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 20px rgba(102, 126, 234, 0.4);
+        }
+
+        .error-msg {
+            color: #dc3545;
+            margin-top: 10px;
+            display: none;
+        }
+
+        .auth-toggle {
+            margin-top: 20px;
+            color: #666;
+        }
+
+        .auth-toggle a {
+            color: #2a5298;
+            cursor: pointer;
+            text-decoration: underline;
+        }
+
+        /* Main App */
+        .app-container {
+            display: none;
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        header {
+            text-align: center;
+            color: white;
+            padding: 30px 20px;
+            margin-bottom: 30px;
+            position: relative;
+        }
+
+        .header-logo {
+            width: 80px;
+            height: 80px;
+            object-fit: contain;
+            border-radius: 50%;
+            border: 3px solid white;
+            margin-bottom: 15px;
+        }
+
+        header h1 {
+            font-size: 2.2rem;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+
+        .logout-btn {
+            position: absolute;
+            left: 20px;
+            top: 20px;
+            background: rgba(255,255,255,0.2);
+            color: white;
+            border: 2px solid white;
+            padding: 8px 20px;
+            border-radius: 20px;
+            cursor: pointer;
+            font-family: 'Cairo', sans-serif;
+            transition: all 0.3s;
+        }
+
+        .logout-btn:hover {
+            background: white;
+            color: #2a5298;
+        }
+
+        .dashboard {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .stat-card {
+            background: white;
+            border-radius: 15px;
+            padding: 25px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            transition: transform 0.3s ease;
+            text-align: center;
+        }
+
+        .stat-card:hover {
+            transform: translateY(-5px);
+        }
+
+        .stat-card h3 {
+            color: #666;
+            font-size: 0.9rem;
+            margin-bottom: 10px;
+        }
+
+        .stat-value {
+            font-size: 1.8rem;
+            font-weight: bold;
+            color: #2a5298;
+        }
+
+        .status-badge {
+            display: inline-block;
+            padding: 5px 15px;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: bold;
+            margin-top: 10px;
+        }
+
+        .status-in { background: #d4edda; color: #155724; }
+        .status-out { background: #f8d7da; color: #721c24; }
+        .status-trip2 { background: #fff3e0; color: #e65100; }
+        .status-trip3 { background: #fce4ec; color: #c2185b; }
+
+        .main-content {
+            display: grid;
+            grid-template-columns: 1fr 2fr;
+            gap: 25px;
+        }
+
+        @media (max-width: 968px) {
+            .main-content { grid-template-columns: 1fr; }
+        }
+
+        .panel {
+            background: white;
+            border-radius: 15px;
+            padding: 25px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+        }
+
+        .panel h2 {
+            color: #2a5298;
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 3px solid #e0e0e0;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .tabs {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+            border-bottom: 2px solid #e0e0e0;
+            flex-wrap: wrap;
+        }
+
+        .tab {
+            padding: 10px 20px;
+            background: none;
+            border: none;
+            color: #666;
+            cursor: pointer;
+            font-weight: 600;
+            border-bottom: 3px solid transparent;
+            transition: all 0.3s;
+            font-family: 'Cairo', sans-serif;
+        }
+
+        .tab.active {
+            color: #2a5298;
+            border-bottom-color: #2a5298;
+        }
+
+        .tab:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .tab-content { display: none; }
+        .tab-content.active { display: block; }
+
+        .form-section {
+            background: #f8f9fa;
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 20px;
+            border-right: 4px solid #2a5298;
+        }
+
+        .form-section h3 {
+            color: #2a5298;
+            margin-bottom: 15px;
+            font-size: 1rem;
+        }
+
+        .form-group {
+            margin-bottom: 15px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+            color: #555;
+            font-weight: 600;
+            font-size: 0.9rem;
+        }
+
+        input, select {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-family: 'Cairo', sans-serif;
+            text-align: right;
+        }
+
+        input:focus, select:focus {
+            outline: none;
+            border-color: #2a5298;
+        }
+
+        .time-display {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 8px;
+            text-align: center;
+            margin-bottom: 20px;
+            font-family: 'Courier New', monospace;
+            font-size: 1.2rem;
+            color: #2a5298;
+            font-weight: bold;
+            border: 2px solid #e0e0e0;
+            direction: ltr;
+        }
+
+        button {
+            width: 100%;
+            padding: 14px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-family: 'Cairo', sans-serif;
+        }
+
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 20px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn-return {
+            background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
+        }
+
+        .btn-end {
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            font-size: 1.2rem;
+            padding: 20px;
+            margin-top: 20px;
+        }
+
+        .btn-trip2 {
+            background: linear-gradient(135deg, #ff9800 0%, #f57c00 100%);
+            font-size: 1.1rem;
+            padding: 15px;
+            margin-top: 10px;
+        }
+
+        .btn-trip3 {
+            background: linear-gradient(135deg, #e91e63 0%, #c2185b 100%);
+            font-size: 1.1rem;
+            padding: 15px;
+            margin-top: 10px;
+        }
+
+        .btn-warehouse {
+            background: linear-gradient(135deg, #4caf50 0%, #2e7d32 100%);
+            font-size: 1.1rem;
+            padding: 15px;
+            margin-bottom: 10px;
+        }
+
+        .btn-export {
+            background: linear-gradient(135deg, #2196f3 0%, #1976d2 100%);
+            margin-top: 10px;
+        }
+
+        .btn-import {
+            background: linear-gradient(135deg, #9c27b0 0%, #7b1fa2 100%);
+            margin-top: 10px;
+        }
+
+        .trip-buttons {
+            display: grid;
+            gap: 10px;
+            margin-top: 20px;
+        }
+
+        .action-buttons {
+            display: grid;
+            gap: 10px;
+            margin-top: 20px;
+        }
+
+        .or-divider {
+            text-align: center;
+            margin: 15px 0;
+            color: #666;
+            position: relative;
+        }
+
+        .or-divider::before,
+        .or-divider::after {
+            content: '';
+            position: absolute;
+            top: 50%;
+            width: 40%;
+            height: 1px;
+            background: #e0e0e0;
+        }
+
+        .or-divider::before { right: 0; }
+        .or-divider::after { left: 0; }
+
+        .trip-list {
+            max-height: 600px;
+            overflow-y: auto;
+        }
+
+        .trip-item {
+            background: #f8f9fa;
+            border-right: 4px solid #2a5298;
+            padding: 20px;
+            margin-bottom: 15px;
+            border-radius: 8px;
+            transition: all 0.3s;
+        }
+
+        .trip-item:hover {
+            background: #e9ecef;
+            transform: translateX(-5px);
+        }
+
+        .trip-item.trip-2 {
+            border-right-color: #ff9800;
+            background: #fff8e1;
+        }
+
+        .trip-item.trip-3 {
+            border-right-color: #e91e63;
+            background: #fce4ec;
+        }
+
+        .trip-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+
+        .trip-title {
+            font-weight: bold;
+            color: #2a5298;
+            font-size: 1.1rem;
+        }
+
+        .trip-status {
+            padding: 5px 12px;
+            border-radius: 15px;
+            font-size: 0.75rem;
+            font-weight: bold;
+        }
+
+        .trip-meta {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 10px;
+            font-size: 0.9rem;
+            color: #666;
+        }
+
+        .meta-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 5px;
+            background: white;
+            border-radius: 5px;
+        }
+
+        .meta-label {
+            font-weight: 600;
+            color: #555;
+            min-width: 80px;
+        }
+
+        .time-badge {
+            background: #e3f2fd;
+            color: #1976d2;
+            padding: 2px 8px;
+            border-radius: 12px;
+            font-weight: bold;
+            font-size: 0.85rem;
+            font-family: 'Courier New', monospace;
+        }
+
+        .reports-section {
+            margin-top: 30px;
+            background: white;
+            border-radius: 15px;
+            padding: 25px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+        }
+
+        .report-buttons {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-top: 20px;
+        }
+
+        .report-btn {
+            padding: 20px;
+            border-radius: 10px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s;
+            border: 2px solid #e0e0e0;
+            background: white;
+        }
+
+        .report-btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 5px 20px rgba(0,0,0,0.1);
+            border-color: #2a5298;
+        }
+
+        .notification {
+            position: fixed;
+            top: 20px;
+            left: 20px;
+            background: white;
+            padding: 15px 25px;
+            border-radius: 10px;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.3);
+            display: none;
+            animation: slideIn 0.3s ease;
+            z-index: 1000;
+        }
+
+        @keyframes slideIn {
+            from { transform: translateX(-400px); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+
+        .notification.show { display: block; }
+        .notification.success { border-right: 4px solid #28a745; }
+        .notification.error { border-right: 4px solid #dc3545; }
+
+        .active-trip-info {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            display: none;
+        }
+
+        .active-trip-info.active { display: block; }
+
+        .info-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 15px;
+            margin-top: 10px;
+        }
+
+        .info-item {
+            background: rgba(255,255,255,0.2);
+            padding: 10px;
+            border-radius: 8px;
+            text-align: center;
+        }
+
+        .info-label { font-size: 0.8rem; opacity: 0.9; margin-bottom: 5px; }
+        .info-value { font-size: 1.1rem; font-weight: bold; }
+
+        .readonly-field {
+            background: #e9ecef;
+            cursor: not-allowed;
+            font-family: 'Courier New', monospace;
+            direction: ltr;
+            text-align: center;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 40px;
+            color: #999;
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            z-index: 2000;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .modal.active { display: flex; }
+
+        .modal-content {
+            background: white;
+            padding: 30px;
+            border-radius: 15px;
+            width: 90%;
+            max-width: 600px;
+            max-height: 80vh;
+            overflow-y: auto;
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #e0e0e0;
+        }
+
+        .close-modal {
+            background: none;
+            border: none;
+            font-size: 1.5rem;
+            cursor: pointer;
+            color: #666;
+            width: auto;
+        }
+
+        .date-range {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .chart-container {
+            margin-top: 20px;
+            padding: 20px;
+            background: #f8f9fa;
+            border-radius: 10px;
+        }
+
+        .chart-bar {
+            display: flex;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+
+        .chart-label {
+            width: 100px;
+            font-size: 0.9rem;
+            text-align: left;
+        }
+
+        .chart-progress {
+            flex: 1;
+            height: 25px;
+            background: #e0e0e0;
+            border-radius: 15px;
+            overflow: hidden;
+            margin: 0 10px;
+        }
+
+        .chart-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
+            border-radius: 15px;
+            transition: width 0.5s ease;
+            display: flex;
+            align-items: center;
+            justify-content: flex-end;
+            padding-right: 10px;
+            color: white;
+            font-size: 0.8rem;
+        }
+
+        .chart-value {
+            width: 40px;
+            text-align: left;
+            font-weight: bold;
+        }
+
+        .calculation-box {
+            background: #fff3e0;
+            border-right: 4px solid #ff9800;
+            padding: 20px;
+            border-radius: 10px;
+            margin-top: 20px;
+            text-align: center;
+            display: none;
+        }
+
+        .calculation-box.active {
+            display: block;
+        }
+
+        .calculation-result {
+            font-size: 2rem;
+            color: #e65100;
+            font-weight: bold;
+            margin: 10px 0;
+            font-family: 'Courier New', monospace;
+        }
+
+        .trip-counter {
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+            margin: 20px 0;
+            flex-wrap: wrap;
+        }
+
+        .counter-item {
+            background: white;
+            padding: 15px 25px;
+            border-radius: 10px;
+            text-align: center;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+
+        .counter-number {
+            font-size: 2rem;
+            font-weight: bold;
+            color: #2a5298;
+        }
+
+        .counter-label {
+            color: #666;
+            font-size: 0.9rem;
+        }
+
+        .counter-item.trip2 .counter-number { color: #ff9800; }
+        .counter-item.trip3 .counter-number { color: #e91e63; }
+
+        .data-transfer-section {
+            background: #e3f2fd;
+            border-right: 4px solid #2196f3;
+            padding: 20px;
+            border-radius: 10px;
+            margin-top: 20px;
+        }
+
+        .file-input-wrapper {
+            position: relative;
+            overflow: hidden;
+            display: inline-block;
+            width: 100%;
+        }
+
+        .file-input-wrapper input[type=file] {
+            position: absolute;
+            left: -9999px;
+        }
+
+        .file-input-label {
+            width: 100%;
+            padding: 14px;
+            background: linear-gradient(135deg, #9c27b0 0%, #7b1fa2 100%);
+            color: white;
+            border-radius: 8px;
+            display: inline-block;
+            cursor: pointer;
+            text-align: center;
+            font-weight: bold;
+            transition: all 0.3s;
+        }
+
+        .file-input-label:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 20px rgba(0,0,0,0.2);
+        }
+
+        .device-info {
+            background: #fff3e0;
+            border: 1px solid #ff9800;
+            padding: 10px;
+            border-radius: 5px;
+            margin-bottom: 15px;
+            font-size: 0.9rem;
+            color: #e65100;
+        }
+
+        .user-info {
+            position: absolute;
+            right: 20px;
+            top: 20px;
+            background: rgba(255,255,255,0.2);
+            color: white;
+            padding: 8px 15px;
+            border-radius: 20px;
+            font-size: 0.9rem;
+        }
+
+        .loading {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid rgba(255,255,255,.3);
+            border-radius: 50%;
+            border-top-color: #fff;
+            animation: spin 1s ease-in-out infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .sync-status {
+            position: fixed;
+            bottom: 20px;
+            left: 20px;
+            background: rgba(0,0,0,0.7);
+            color: white;
+            padding: 10px 20px;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            display: none;
+        }
+
+        .sync-status.show { display: block; }
+        .sync-status.online { background: rgba(40, 167, 69, 0.9); }
+        .sync-status.offline { background: rgba(220, 53, 69, 0.9); }
+    </style>
+</head>
+<body>
+
+    <!-- Login Screen -->
+    <div class="login-container" id="loginScreen">
+        <div class="login-box">
+            <img src="https://i.imgur.com/2F78wTm.jpg" alt="Logo" class="login-logo" onerror="this.src='https://via.placeholder.com/120'">
+            <h2>نظام إدارة النقل والمستودعات</h2>
+            <form class="login-form" id="loginForm">
+                <input type="email" id="email" placeholder="البريد الإلكتروني" required>
+                <input type="password" id="password" placeholder="كلمة المرور" required>
+                <button type="submit" class="login-btn" id="loginBtn">تسجيل الدخول</button>
+                <p class="error-msg" id="loginError">اسم المستخدم أو كلمة المرور غير صحيحة</p>
+            </form>
+            <div class="auth-toggle">
+                <span id="authToggleText">ليس لديك حساب؟ </span>
+                <a onclick="toggleAuthMode()" id="authToggleLink">إنشاء حساب جديد</a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Application -->
+    <div class="app-container" id="appContainer">
+        <header>
+            <div class="user-info" id="userInfo">user@email.com</div>
+            <button class="logout-btn" onclick="logout()">تسجيل الخروج</button>
+            <img src="https://i.imgur.com/2F78wTm.jpg" alt="Logo" class="header-logo" onerror="this.src='https://via.placeholder.com/80'">
+            <h1>نظام إدارة النقل والمستودعات</h1>
+            <p>تتبع وقت الرحلات - ISUZU 4344 DEB</p>
+        </header>
+
+        <div class="dashboard">
+            <div class="stat-card">
+                <h3>الحالة الحالية</h3>
+                <div class="stat-value" id="currentStatus">في المستودع</div>
+                <span class="status-badge status-in" id="statusBadge">متاح</span>
+            </div>
+            <div class="stat-card">
+                <h3>إجمالي الرحلات اليوم</h3>
+                <div class="stat-value" id="totalTrips">0</div>
+            </div>
+            <div class="stat-card">
+                <h3>إجمالي وقت السفر</h3>
+                <div class="stat-value" id="totalTravelTime">0</div>
+            </div>
+            <div class="stat-card">
+                <h3>الرحلة الحالية</h3>
+                <div class="stat-value" id="currentTripNumber">-</div>
+            </div>
+        </div>
+
+        <!-- Trip Counters -->
+        <div class="trip-counter" id="tripCounters" style="display: none;">
+            <div class="counter-item">
+                <div class="counter-number" id="countTrip1">0</div>
+                <div class="counter-label">رحلة 1</div>
+            </div>
+            <div class="counter-item trip2">
+                <div class="counter-number" id="countTrip2">0</div>
+                <div class="counter-label">رحلة 2</div>
+            </div>
+            <div class="counter-item trip3">
+                <div class="counter-number" id="countTrip3">0</div>
+                <div class="counter-label">رحلة 3</div>
+            </div>
+        </div>
+
+        <div class="main-content">
+            <div class="panel">
+                <div class="tabs">
+                    <button class="tab active" onclick="switchTab('departure')" id="departureTab">🚀 مغادرة</button>
+                    <button class="tab" onclick="switchTab('active')" id="activeTab" disabled>⏱️ رحلة نشطة</button>
+                    <button class="tab" onclick="switchTab('data')" id="dataTab">💾 نقل البيانات</button>
+                </div>
+
+                <!-- Departure Form -->
+                <div id="departureForm" class="tab-content active">
+                    <h2>تسجيل المغادرة من المستودع</h2>
+                    <div class="time-display" id="currentTime">--:--:--</div>
+
+                    <form id="departForm">
+                        <div class="form-section">
+                            <h3>🚗 بيانات المركبة (ثابتة)</h3>
+                            <div class="form-group">
+                                <label>نوع المركبة / الموديل</label>
+                                <input type="text" value="ISUZU" readonly class="readonly-field">
+                            </div>
+                            <div class="form-group">
+                                <label>رقم اللوحة</label>
+                                <input type="text" value="4344 DEB" readonly class="readonly-field">
+                            </div>
+                        </div>
+
+                        <div class="form-section">
+                            <h3>📍 تفاصيل الرحلة</h3>
+                            <div class="form-group">
+                                <label>نقطة الانطلاق</label>
+                                <input type="text" value="Warehouse" readonly class="readonly-field">
+                            </div>
+                            <div class="form-group">
+                                <label>الغرض من الرحلة</label>
+                                <select id="purpose" required>
+                                    <option value="">اختر الغرض...</option>
+                                    <option value="delivery">توصيل</option>
+                                    <option value="pickup">استلام</option>
+                                    <option value="transfer">نقل</option>
+                                    <option value="maintenance">صيانة</option>
+                                    <option value="other">أخرى</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <button type="submit">🚀 تسجيل المغادرة</button>
+                    </form>
+                </div>
+
+                <!-- Active Trip Form (Return Options) -->
+                <div id="activeForm" class="tab-content">
+                    <h2 id="activeTripTitle">إنهاء الرحلة</h2>
+
+                    <div class="active-trip-info" id="activeTripInfo">
+                        <h3>🚛 بيانات الرحلة الحالية</h3>
+                        <div class="info-grid">
+                            <div class="info-item">
+                                <div class="info-label">المركبة</div>
+                                <div class="info-value">ISUZU - 4344 DEB</div>
+                            </div>
+                            <div class="info-item">
+                                <div class="info-label">نوع الرحلة</div>
+                                <div class="info-value" id="infoTripType">-</div>
+                            </div>
+                            <div class="info-item">
+                                <div class="info-label">وقت البدء</div>
+                                <div class="info-value" id="infoStartTime" style="font-family: monospace;">-</div>
+                            </div>
+                            <div class="info-item">
+                                <div class="info-label">الغرض</div>
+                                <div class="info-value" id="infoPurpose">-</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <form id="returnFormElement">
+                        <div class="form-section">
+                            <h3>📊 بيانات الرحلة</h3>
+                            <div class="form-group">
+                                <label>وقت البدء</label>
+                                <input type="text" id="startTimeDisplay" class="readonly-field" readonly>
+                            </div>
+                            <div class="form-group">
+                                <label>وقت الانتهاء (الآن)</label>
+                                <input type="text" id="endTimeDisplay" class="readonly-field" readonly>
+                            </div>
+
+                            <div class="form-group">
+                                <label>ملاحظات (اختياري)</label>
+                                <input type="text" id="tripNotes" placeholder="أي ملاحظات...">
+                            </div>
+                        </div>
+
+                        <button type="button" class="btn-end" onclick="calculateTrip()">
+                            ⏱️ حساب وقت الرحلة
+                        </button>
+
+                        <div class="calculation-box" id="calculationBox">
+                            <h3>نتيجة الحساب</h3>
+                            <div class="calculation-result" id="calcResult">00:00:00</div>
+                            <p>سيتم حفظ الرحلة في السجل</p>
+                        </div>
+
+                        <div class="trip-buttons" id="tripButtons" style="display: none;">
+                            <div class="or-divider">أو</div>
+                            <button type="button" class="btn-trip2" onclick="startSecondTrip()">
+                                🔄 بدء رحلة فرعية (Trip 2)
+                            </button>
+                            <button type="button" class="btn-trip3" onclick="startThirdTrip()">
+                                🔄 بدء رحلة فرعية (Trip 3)
+                            </button>
+                            <button type="button" class="btn-warehouse" onclick="returnToWarehouse()">
+                                🏭 العودة للمستودع
+                            </button>
+                        </div>
+                    </form>
+                </div>
+
+                <!-- Data Transfer Tab -->
+                <div id="dataForm" class="tab-content">
+                    <h2>💾 نقل البيانات</h2>
+
+                    <div class="data-transfer-section">
+                        <h3>تصدير البيانات</h3>
+                        <p>قم بتصدير سجل الرحلات إلى ملف Excel أو PDF</p>
+                        <button class="btn-export" onclick="exportToExcel()">
+                            📊 تصدير Excel
+                        </button>
+                        <button class="btn-export" onclick="exportToPDF()" style="margin-top: 10px;">
+                            📄 تصدير PDF
+                        </button>
+                    </div>
+
+                    <div class="data-transfer-section" style="margin-top: 20px;">
+                        <h3>استيراد البيانات</h3>
+                        <p>قم باستيراد سجل الرحلات من ملف JSON</p>
+                        <div class="file-input-wrapper">
+                            <input type="file" id="importFile" accept=".json" onchange="importData(this)">
+                            <label for="importFile" class="file-input-label">
+                                📁 اختر ملف JSON
+                            </label>
+                        </div>
+                    </div>
+
+                    <div class="device-info" style="margin-top: 20px;">
+                        <strong>💡 ملاحظة:</strong> يتم حفظ البيانات محلياً في المتصفح. 
+                        استخدم التصدير للاحتفاظ بنسخة احتياطية.
+                    </div>
+                </div>
+            </div>
+
+            <!-- Trip History Panel -->
+            <div class="panel">
+                <h2>📋 سجل الرحلات</h2>
+                <div class="trip-list" id="tripList">
+                    <div class="empty-state">
+                        لا توجد رحلات مسجلة
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Reports Section -->
+        <div class="reports-section">
+            <h2>📈 التقارير والإحصائيات</h2>
+            <div class="report-buttons">
+                <div class="report-btn" onclick="showDailyReport()">
+                    <h3>📅 تقرير يومي</h3>
+                    <p>عرض إحصائيات اليوم</p>
+                </div>
+                <div class="report-btn" onclick="showWeeklyReport()">
+                    <h3>📊 تقرير أسبوعي</h3>
+                    <p>عرض إحصائيات الأسبوع</p>
+                </div>
+                <div class="report-btn" onclick="showCustomReport()">
+                    <h3>🔍 تقرير مخصص</h3>
+                    <p>تحديد فترة زمنية</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Notification -->
+    <div class="notification" id="notification">
+        <span id="notificationText"></span>
+    </div>
+
+    <!-- Sync Status -->
+    <div class="sync-status" id="syncStatus">
+        <span id="syncStatusText">جاري المزامنة...</span>
+    </div>
+
+    <!-- Report Modal -->
+    <div class="modal" id="reportModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 id="modalTitle">التقرير</h2>
+                <button class="close-modal" onclick="closeModal()">&times;</button>
+            </div>
+            <div id="modalBody">
+                <!-- Content will be inserted here -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Firebase SDK - Authentication Module -->
+    <script type="module">
+        // ============================================
+        // YOUR FIREBASE CONFIGURATION - ALREADY FILLED
+        // ============================================
+        const firebaseConfig = {
+            apiKey: "AIzaSyBBdKT3REj6FUB7FCOpryshvRecUgY0kyQ",
+            authDomain: "warehouse-system-7c6ae.firebaseapp.com",
+            projectId: "warehouse-system-7c6ae",
+            storageBucket: "warehouse-system-7c6ae.firebasestorage.app",
+            messagingSenderId: "605850859571",
+            appId: "1:605850859571:web:c258f444bc9e10690f4b46"
+        };
+
+        // Import Firebase modules
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/12.11.0/firebase-app.js";
+        import { 
+            getAuth, 
+            signInWithEmailAndPassword, 
+            createUserWithEmailAndPassword,
+            onAuthStateChanged,
+            signOut 
+        } from "https://www.gstatic.com/firebasejs/12.11.0/firebase-auth.js";
+
+        // Initialize Firebase
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+
+        // DOM elements
+        const loginScreen = document.getElementById('loginScreen');
+        const appContainer = document.getElementById('appContainer');
+        const loginForm = document.getElementById('loginForm');
+        const loginError = document.getElementById('loginError');
+        const loginBtn = document.getElementById('loginBtn');
+        const authToggleLink = document.getElementById('authToggleLink');
+        const authToggleText = document.getElementById('authToggleText');
+        const userInfo = document.getElementById('userInfo');
+
+        let isSignUpMode = false;
+
+        // Toggle between login and signup
+        window.toggleAuthMode = function() {
+            isSignUpMode = !isSignUpMode;
+            if (isSignUpMode) {
+                loginBtn.textContent = 'إنشاء حساب جديد';
+                authToggleText.textContent = 'لديك حساب بالفعل؟ ';
+                authToggleLink.textContent = 'تسجيل الدخول';
+            } else {
+                loginBtn.textContent = 'تسجيل الدخول';
+                authToggleText.textContent = 'ليس لديك حساب؟ ';
+                authToggleLink.textContent = 'إنشاء حساب جديد';
+            }
+        };
+
+        // Handle form submission
+        loginForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            const email = document.getElementById('email').value;
+            const password = document.getElementById('password').value;
+
+            // Show loading state
+            loginBtn.innerHTML = '<span class="loading"></span> جاري التحميل...';
+            loginBtn.disabled = true;
+            loginError.style.display = 'none';
+
+            try {
+                let userCredential;
+
+                if (isSignUpMode) {
+                    // Create new user
+                    userCredential = await createUserWithEmailAndPassword(auth, email, password);
+                    console.log('✅ User created successfully:', userCredential.user);
+                    showNotification('تم إنشاء الحساب بنجاح!', 'success');
+                } else {
+                    // Sign in existing user
+                    userCredential = await signInWithEmailAndPassword(auth, email, password);
+                    console.log('✅ Login successful:', userCredential.user);
+                }
+
+                // Auth state listener will handle the UI transition
+            } catch (error) {
+                console.error('❌ Auth error:', error.code, error.message);
+                loginError.textContent = getErrorMessage(error.code);
+                loginError.style.display = 'block';
+
+                // Reset button
+                loginBtn.textContent = isSignUpMode ? 'إنشاء حساب جديد' : 'تسجيل الدخول';
+                loginBtn.disabled = false;
+            }
+        });
+
+        // Translate Firebase error messages to Arabic
+        function getErrorMessage(code) {
+            const messages = {
+                'auth/invalid-email': 'البريد الإلكتروني غير صالح',
+                'auth/user-disabled': 'هذا الحساب معطل',
+                'auth/user-not-found': 'لا يوجد حساب بهذا البريد',
+                'auth/wrong-password': 'كلمة المرور غير صحيحة',
+                'auth/email-already-in-use': 'هذا البريد مستخدم بالفعل',
+                'auth/weak-password': 'كلمة المرور ضعيفة (يجب 6 أحرف على الأقل)',
+                'auth/invalid-credential': 'البريد أو كلمة المرور غير صحيحة',
+                'auth/too-many-requests': 'محاولات كثيرة، حاول لاحقاً',
+                'auth/invalid-api-key': 'مفتاح API غير صالح - تحقق من الإعدادات',
+                'auth/network-request-failed': 'فشل الاتصال بالشبكة'
+            };
+            return messages[code] || 'حدث خطأ، حاول مرة أخرى: ' + error.message;
+        }
+
+        // Listen for auth state changes
+        onAuthStateChanged(auth, (user) => {
+            if (user) {
+                // User is signed in
+                console.log('👤 User logged in:', user.email);
+                userInfo.textContent = user.email;
+
+                // Hide login, show app
+                loginScreen.style.display = 'none';
+                appContainer.style.display = 'block';
+
+                // Initialize app
+                initApp();
+            } else {
+                // User is signed out
+                console.log('👤 User logged out');
+                loginScreen.style.display = 'flex';
+                appContainer.style.display = 'none';
+            }
+        });
+
+        // Logout function
+        window.logout = async function() {
+            try {
+                await signOut(auth);
+                console.log('✅ Logged out successfully');
+                showNotification('تم تسجيل الخروج بنجاح', 'success');
+            } catch (error) {
+                console.error('❌ Logout error:', error);
+                showNotification('حدث خطأ أثناء تسجيل الخروج', 'error');
+            }
+        };
+
+        // Notification system
+        window.showNotification = function(message, type = 'success') {
+            const notification = document.getElementById('notification');
+            const notificationText = document.getElementById('notificationText');
+
+            notificationText.textContent = message;
+            notification.className = 'notification show ' + type;
+
+            setTimeout(() => {
+                notification.classList.remove('show');
+            }, 3000);
+        };
+
+        // Initialize app
+        function initApp() {
+            updateTime();
+            setInterval(updateTime, 1000);
+            loadTrips();
+        }
+
+        // Update time display
+        function updateTime() {
+            const now = new Date();
+            const timeStr = now.toLocaleTimeString('en-GB');
+            const currentTimeEl = document.getElementById('currentTime');
+            if (currentTimeEl) {
+                currentTimeEl.textContent = timeStr;
+            }
+        }
+
+        // Tab switching
+        window.switchTab = function(tabName) {
+            document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+            document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+
+            if (tabName === 'departure') {
+                document.getElementById('departureTab').classList.add('active');
+                document.getElementById('departureForm').classList.add('active');
+            } else if (tabName === 'active') {
+                document.getElementById('activeTab').classList.add('active');
+                document.getElementById('activeForm').classList.add('active');
+            } else if (tabName === 'data') {
+                document.getElementById('dataTab').classList.add('active');
+                document.getElementById('dataForm').classList.add('active');
+            }
+        };
+
+        // Trip management variables
+        let currentTrip = null;
+        let trips = JSON.parse(localStorage.getItem('trips')) || [];
+
+        // Handle departure form
+        document.getElementById('departForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+
+            const purpose = document.getElementById('purpose').value;
+            if (!purpose) {
+                showNotification('الرجاء اختيار الغرض من الرحلة', 'error');
+                return;
+            }
+
+            const now = new Date();
+            currentTrip = {
+                id: Date.now(),
+                tripNumber: 1,
+                vehicle: 'ISUZU',
+                plate: '4344 DEB',
+                purpose: purpose,
+                startTime: now,
+                startTimeStr: now.toLocaleTimeString('en-GB'),
+                date: now.toLocaleDateString('en-GB'),
+                status: 'active',
+                notes: ''
+            };
+
+            // Update UI
+            document.getElementById('currentStatus').textContent = 'في رحلة';
+            document.getElementById('statusBadge').textContent = 'رحلة 1';
+            document.getElementById('statusBadge').className = 'status-badge status-out';
+            document.getElementById('currentTripNumber').textContent = '1';
+            document.getElementById('activeTab').disabled = false;
+
+            // Update active trip info
+            document.getElementById('infoTripType').textContent = 'رحلة 1';
+            document.getElementById('infoStartTime').textContent = currentTrip.startTimeStr;
+            document.getElementById('infoPurpose').textContent = purpose;
+            document.getElementById('startTimeDisplay').value = currentTrip.startTimeStr;
+            document.getElementById('activeTripInfo').classList.add('active');
+
+            // Switch to active tab
+            switchTab('active');
+
+            showNotification('تم تسجيل المغادرة بنجاح!', 'success');
+        });
+
+        // Calculate trip time
+        window.calculateTrip = function() {
+            if (!currentTrip) return;
+
+            const endTime = new Date();
+            const endTimeStr = endTime.toLocaleTimeString('en-GB');
+            document.getElementById('endTimeDisplay').value = endTimeStr;
+
+            const diff = Math.floor((endTime - currentTrip.startTime) / 1000);
+            const hours = Math.floor(diff / 3600);
+            const minutes = Math.floor((diff % 3600) / 60);
+            const seconds = diff % 60;
+
+            const timeStr = `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+            document.getElementById('calcResult').textContent = timeStr;
+            document.getElementById('calculationBox').classList.add('active');
+            document.getElementById('tripButtons').style.display = 'grid';
+
+            currentTrip.endTime = endTime;
+            currentTrip.endTimeStr = endTimeStr;
+            currentTrip.duration = timeStr;
+            currentTrip.durationSeconds = diff;
+        };
+
+        // Start second trip
+        window.startSecondTrip = function() {
+            if (!currentTrip) return;
+
+            const notes = document.getElementById('tripNotes').value;
+            currentTrip.notes = notes;
+            currentTrip.trip2 = {
+                startTime: new Date(),
+                startTimeStr: new Date().toLocaleTimeString('en-GB')
+            };
+
+            currentTrip.tripNumber = 2;
+            document.getElementById('currentTripNumber').textContent = '2';
+            document.getElementById('statusBadge').textContent = 'رحلة 2';
+            document.getElementById('statusBadge').className = 'status-badge status-trip2';
+            document.getElementById('infoTripType').textContent = 'رحلة 2';
+            document.getElementById('activeTripTitle').textContent = 'إنهاء الرحلة الفرعية 2';
+
+            showNotification('تم بدء الرحلة الفرعية 2', 'success');
+        };
+
+        // Start third trip
+        window.startThirdTrip = function() {
+            if (!currentTrip) return;
+
+            currentTrip.trip3 = {
+                startTime: new Date(),
+                startTimeStr: new Date().toLocaleTimeString('en-GB')
+            };
+
+            currentTrip.tripNumber = 3;
+            document.getElementById('currentTripNumber').textContent = '3';
+            document.getElementById('statusBadge').textContent = 'رحلة 3';
+            document.getElementById('statusBadge').className = 'status-badge status-trip3';
+            document.getElementById('infoTripType').textContent = 'رحلة 3';
+            document.getElementById('activeTripTitle').textContent = 'إنهاء الرحلة الفرعية 3';
+
+            showNotification('تم بدء الرحلة الفرعية 3', 'success');
+        };
+
+        // Return to warehouse - end trip
+        window.returnToWarehouse = function() {
+            if (!currentTrip) return;
+
+            const notes = document.getElementById('tripNotes').value;
+            currentTrip.notes = notes;
+            currentTrip.status = 'completed';
+
+            // Save trip
+            trips.unshift(currentTrip);
+            localStorage.setItem('trips', JSON.stringify(trips));
+
+            // Reset UI
+            document.getElementById('currentStatus').textContent = 'في المستودع';
+            document.getElementById('statusBadge').textContent = 'متاح';
+            document.getElementById('statusBadge').className = 'status-badge status-in';
+            document.getElementById('currentTripNumber').textContent = '-';
+            document.getElementById('activeTab').disabled = true;
+            document.getElementById('activeTripInfo').classList.remove('active');
+            document.getElementById('calculationBox').classList.remove('active');
+            document.getElementById('tripButtons').style.display = 'none';
+            document.getElementById('activeTripTitle').textContent = 'إنهاء الرحلة';
+
+            // Reset form
+            document.getElementById('departForm').reset();
+            document.getElementById('returnFormElement').reset();
+
+            // Update trip list
+            loadTrips();
+            updateStats();
+
+            // Switch to departure tab
+            switchTab('departure');
+
+            currentTrip = null;
+
+            showNotification('تم إنهاء الرحلة وحفظها بنجاح!', 'success');
+        };
+
+        // Load trips list
+        function loadTrips() {
+            const tripList = document.getElementById('tripList');
+
+            if (trips.length === 0) {
+                tripList.innerHTML = '<div class="empty-state">لا توجد رحلات مسجلة</div>';
+                return;
+            }
+
+            tripList.innerHTML = trips.map(trip => `
+                <div class="trip-item trip-${trip.tripNumber}">
+                    <div class="trip-header">
+                        <div class="trip-title">رحلة ${trip.tripNumber} - ${trip.vehicle}</div>
+                        <div class="trip-status">${trip.status === 'completed' ? 'مكتملة' : 'نشطة'}</div>
+                    </div>
+                    <div class="trip-meta">
+                        <div class="meta-item">
+                            <span class="meta-label">اللوحة:</span>
+                            <span>${trip.plate}</span>
+                        </div>
+                        <div class="meta-item">
+                            <span class="meta-label">التاريخ:</span>
+                            <span>${trip.date}</span>
+                        </div>
+                        <div class="meta-item">
+                            <span class="meta-label">البدء:</span>
+                            <span class="time-badge">${trip.startTimeStr}</span>
+                        </div>
+                        <div class="meta-item">
+                            <span class="meta-label">الانتهاء:</span>
+                            <span class="time-badge">${trip.endTimeStr || '-'}</span>
+                        </div>
+                        <div class="meta-item">
+                            <span class="meta-label">المدة:</span>
+                            <span class="time-badge">${trip.duration || '-'}</span>
+                        </div>
+                        <div class="meta-item">
+                            <span class="meta-label">الغرض:</span>
+                            <span>${trip.purpose}</span>
+                        </div>
+                    </div>
+                    ${trip.notes ? `<div style="margin-top: 10px; color: #666; font-size: 0.9rem;"><strong>ملاحظات:</strong> ${trip.notes}</div>` : ''}
+                </div>
+            `).join('');
+        }
+
+        // Update statistics
+        function updateStats() {
+            const today = new Date().toLocaleDateString('en-GB');
+            const todayTrips = trips.filter(t => t.date === today && t.status === 'completed');
+
+            document.getElementById('totalTrips').textContent = todayTrips.length;
+
+            const totalSeconds = todayTrips.reduce((sum, trip) => sum + (trip.durationSeconds || 0), 0);
+            const hours = Math.floor(totalSeconds / 3600);
+            const minutes = Math.floor((totalSeconds % 3600) / 60);
+            document.getElementById('totalTravelTime').textContent = `${hours}h ${minutes}m`;
+
+            // Update counters
+            document.getElementById('countTrip1').textContent = todayTrips.filter(t => t.tripNumber === 1).length;
+            document.getElementById('countTrip2').textContent = todayTrips.filter(t => t.tripNumber === 2).length;
+            document.getElementById('countTrip3').textContent = todayTrips.filter(t => t.tripNumber === 3).length;
+            document.getElementById('tripCounters').style.display = todayTrips.length > 0 ? 'flex' : 'none';
+        }
+
+        // Export to Excel
+        window.exportToExcel = function() {
+            if (trips.length === 0) {
+                showNotification('لا توجد رحلات للتصدير', 'error');
+                return;
+            }
+
+            const data = trips.map(t => ({
+                'رقم الرحلة': t.tripNumber,
+                'المركبة': t.vehicle,
+                'اللوحة': t.plate,
+                'التاريخ': t.date,
+                'وقت البدء': t.startTimeStr,
+                'وقت الانتهاء': t.endTimeStr || '-',
+                'المدة': t.duration || '-',
+                'الغرض': t.purpose,
+                'الحالة': t.status === 'completed' ? 'مكتملة' : 'نشطة',
+                'ملاحظات': t.notes || '-'
+            }));
+
+            const ws = XLSX.utils.json_to_sheet(data);
+            const wb = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(wb, ws, 'الرحلات');
+            XLSX.writeFile(wb, `رحلات_${new Date().toLocaleDateString('en-GB')}.xlsx`);
+
+            showNotification('تم تصدير البيانات بنجاح!', 'success');
+        };
+
+        // Export to PDF
+        window.exportToPDF = function() {
+            if (trips.length === 0) {
+                showNotification('لا توجد رحلات للتصدير', 'error');
+                return;
+            }
+
+            const { jsPDF } = window.jspdf;
+            const doc = new jsPDF();
+
+            // Add Arabic font support (simplified)
+            doc.setFont('helvetica');
+            doc.text('سجل الرحلات', 14, 20);
+
+            const headers = [['رقم', 'مركبة', 'لوحة', 'تاريخ', 'بدء', 'انتهاء', 'مدة', 'غرض']];
+            const data = trips.map(t => [
+                t.tripNumber,
+                t.vehicle,
+                t.plate,
+                t.date,
+                t.startTimeStr,
+                t.endTimeStr || '-',
+                t.duration || '-',
+                t.purpose
+            ]);
+
+            doc.autoTable({
+                head: headers,
+                body: data,
+                startY: 30,
+                theme: 'grid'
+            });
+
+            doc.save(`رحلات_${new Date().toLocaleDateString('en-GB')}.pdf`);
+            showNotification('تم تصدير PDF بنجاح!', 'success');
+        };
+
+        // Import data
+        window.importData = function(input) {
+            const file = input.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                try {
+                    const imported = JSON.parse(e.target.result);
+                    if (Array.isArray(imported)) {
+                        trips = imported;
+                        localStorage.setItem('trips', JSON.stringify(trips));
+                        loadTrips();
+                        updateStats();
+                        showNotification(`تم استيراد ${imported.length} رحلة بنجاح!`, 'success');
+                    } else {
+                        throw new Error('Invalid format');
+                    }
+                } catch (err) {
+                    showNotification('خطأ في قراءة الملف', 'error');
+                }
+            };
+            reader.readAsText(file);
+        };
+
+        // Report functions
+        window.showDailyReport = function() {
+            const today = new Date().toLocaleDateString('en-GB');
+            const todayTrips = trips.filter(t => t.date === today);
+
+            document.getElementById('modalTitle').textContent = 'التقرير اليومي';
+            document.getElementById('modalBody').innerHTML = `
+                <div class="chart-container">
+                    <h3>إحصائيات اليوم: ${today}</h3>
+                    <p>إجمالي الرحلات: ${todayTrips.length}</p>
+                    <p>رحلات مكتملة: ${todayTrips.filter(t => t.status === 'completed').length}</p>
+                </div>
+            `;
+            document.getElementById('reportModal').classList.add('active');
+        };
+
+        window.showWeeklyReport = function() {
+            document.getElementById('modalTitle').textContent = 'التقرير الأسبوعي';
+            document.getElementById('modalBody').innerHTML = '<div class="chart-container"><h3>قريباً...</h3></div>';
+            document.getElementById('reportModal').classList.add('active');
+        };
+
+        window.showCustomReport = function() {
+            document.getElementById('modalTitle').textContent = 'تقرير مخصص';
+            document.getElementById('modalBody').innerHTML = `
+                <div class="date-range">
+                    <div class="form-group">
+                        <label>من تاريخ</label>
+                        <input type="date" id="fromDate">
+                    </div>
+                    <div class="form-group">
+                        <label>إلى تاريخ</label>
+                        <input type="date" id="toDate">
+                    </div>
+                </div>
+                <button onclick="generateCustomReport()">عرض التقرير</button>
+            `;
+            document.getElementById('reportModal').classList.add('active');
+        };
+
+        window.generateCustomReport = function() {
+            showNotification('جاري إعداد التقرير...', 'success');
+        };
+
+        window.closeModal = function() {
+            document.getElementById('reportModal').classList.remove('active');
+        };
+
+        // Initialize on load
+        updateStats();
+    </script>
+</body>
+</html>
